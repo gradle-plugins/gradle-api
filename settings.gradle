@@ -1,0 +1,63 @@
+import groovy.json.JsonSlurper
+import groovy.transform.TupleConstructor
+import org.gradle.util.VersionNumber
+
+rootProject.name = 'gradle-api'
+
+// Gradle APIs
+@TupleConstructor
+class VersionDownloadInfo {
+    def json
+
+    String getVersion() {
+        return json.version
+    }
+
+    boolean isNotSnapshot() {
+        return !json.snapshot
+    }
+
+    boolean isNotReleaseCandidate() {
+        return !json.version.contains("-rc-")
+    }
+
+    boolean isNotMilestone() {
+        return !json.version.contains("-milestone-")
+    }
+
+    boolean greaterOrEqualTo(String versionString) {
+        return VersionNumber.parse(versionString).compareTo(VersionNumber.parse(json.version)) <= 0
+    }
+}
+private Set<String> allGeneralAvailableVersion() {
+    def versionInfo = new JsonSlurper().parseText('https://services.gradle.org/versions/all'.toURL().text).collect { new VersionDownloadInfo(it) }
+    def result = versionInfo.findAll { it.notSnapshot && it.notReleaseCandidate && it.notMilestone && it.greaterOrEqualTo("2.14") }.collect { it.version }
+    return result
+}
+allGeneralAvailableVersion().each { version ->
+    include("${version}")
+    project(":${version}").projectDir = file("subprojects/gradle-api-${version}")
+}
+
+plugins.withId('com.gradle.enterprise') {
+    gradleEnterprise {
+        buildScan {
+            termsOfServiceUrl = "https://gradle.com/terms-of-service"
+            termsOfServiceAgree = "yes"
+
+            if (System.getenv('CI')) {
+                tag 'CI'
+                value('Git Commit SHA', System.getenv('CI_COMMIT_SHA'))
+                value('GitLab Runner', System.getenv('CI_RUNNER_DESCRIPTION'))
+            } else {
+                tag 'LOCAL'
+            }
+
+            obfuscation {
+                username { name -> 'super-human' }
+                hostname { host -> 'somewhere' }
+                ipAddresses { addresses -> addresses.collect { '1.2.3.4' } }
+            }
+        }
+    }
+}

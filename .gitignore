@@ -1,0 +1,14 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+
+# Ignore Gradle API version directories
+subprojects
+
+# Ignore macOS-specific cache files
+.DS_Store
+
+# Ignore IntelliJ-specific directory
+.idea
