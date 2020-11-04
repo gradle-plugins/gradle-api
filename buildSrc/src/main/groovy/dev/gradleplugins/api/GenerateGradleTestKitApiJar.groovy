@@ -33,7 +33,7 @@ import org.gradle.workers.WorkerExecutor
 import javax.inject.Inject
 
 @CompileStatic
-public abstract class GenerateGradleApiJar extends DefaultTask {
+abstract class GenerateGradleTestKitApiJar extends DefaultTask {
     @Input
     abstract Property<String> getVersion();
 
@@ -50,14 +50,14 @@ public abstract class GenerateGradleApiJar extends DefaultTask {
     protected abstract ProjectLayout getLayout()
 
     @Inject
-    GenerateGradleApiJar() {
-        getOutputFile().value(layout.buildDirectory.file(version.map { "gradle-user-home/caches/${it}/generated-gradle-jars/gradle-api-${it}.jar" })).disallowChanges()
+    GenerateGradleTestKitApiJar() {
+        getOutputFile().value(layout.buildDirectory.file(version.map { "gradle-user-home/caches/${it}/generated-gradle-jars/gradle-test-kit-${it}.jar" })).disallowChanges()
     }
 
     @TaskAction
     private void doGenerate() {
         getWorkerExecutor().processIsolation {
-            it.classpath.from(this.classpath)
+            it.getClasspath().from(this.classpath)
         }.submit(ExecuteGradleAction.class) { param ->
             param.gradleUserHomeDirectory.set(layout.buildDirectory.dir('gradle-user-home'))
             param.workingDirectory.set(this.temporaryDir)
@@ -65,7 +65,7 @@ public abstract class GenerateGradleApiJar extends DefaultTask {
             param.buildscript.set('''
             |def configuration = configurations.create('generator')
             |dependencies {
-            |   generator gradleApi()
+            |   generator gradleTestKit()
             |}
             |tasks.create('generate') {
             |   doLast {

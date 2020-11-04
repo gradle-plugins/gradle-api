@@ -27,64 +27,24 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
             group = 'dev.gradleplugins'
             version = gradleVersion
 
-            def generateGradleApiJarTask = tasks.register("generateGradleApi", GenerateGradleApiJar) { task ->
-                task.getVersion().set(gradleVersion)
-                task.getOutputFile().set(layout.buildDirectory.file("generated-gradle-jars/gradle-api.jar"));
-                task.getOutputSourceFile().set(layout.buildDirectory.file("generated-gradle-jars/gradle-api-sources.jar"));
+            // Configure classpath for ExecuteGradleAction worker
+            configurations {
+                runtime
+            }
+            dependencies {
+                runtime gradleTestKit()
             }
 
+            // Configure project lifecycle
             configurations {
                 compileOnly {
                     canBeConsumed = false
                     canBeResolved = false
                 }
-                apiElements {
-                    canBeResolved = false
-                    canBeConsumed = true
-                    extendsFrom compileOnly
-                    outgoing.artifact(generateGradleApiJarTask.flatMap { it.outputFile })
-                    attributes {
-                        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_API))
-                        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.LIBRARY))
-                        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
-                        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, LibraryElements.JAR))
-                        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Integer.parseInt(minimumJavaVersionFor(gradleVersion).majorVersion))
-                    }
-
-                }
 
                 runtimeOnly {
                     canBeConsumed = false
                     canBeResolved = false
-                }
-
-                runtimeElements {
-                    canBeResolved = false
-                    canBeConsumed = true
-                    extendsFrom runtimeOnly
-                    outgoing.artifact(generateGradleApiJarTask.flatMap { it.outputFile })
-                    attributes {
-                        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
-                        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.LIBRARY))
-                        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
-                        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, LibraryElements.JAR))
-                        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Integer.parseInt(minimumJavaVersionFor(gradleVersion).majorVersion))
-                    }
-
-                }
-                sourcesElements {
-                    canBeResolved = false
-                    canBeConsumed = true
-                    outgoing.artifact(generateGradleApiJarTask.flatMap { it.outputSourceFile }) {
-                        classifier = 'sources'
-                    }
-                    attributes {
-                        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
-                        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.DOCUMENTATION))
-                        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
-                        attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType, DocsType.SOURCES))
-                        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Integer.parseInt(minimumJavaVersionFor(gradleVersion).majorVersion))
-                    }
                 }
             }
             dependencies {
@@ -97,34 +57,9 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
                 }
             }
 
-            def adhocComponent = softwareComponentFactory.adhoc('gradleApi');
-            adhocComponent.addVariantsFromConfiguration(configurations.apiElements) {}
-            adhocComponent.addVariantsFromConfiguration(configurations.runtimeElements) {}
-            adhocComponent.addVariantsFromConfiguration(configurations.sourcesElements) {}
-            project.getComponents().add(adhocComponent);
-
-            apply plugin: 'maven-publish'
-            publishing {
-                publications {
-                    gradleApi(MavenPublication) {
-                        from components.gradleApi
-                        version = gradleVersion
-                        groupId = project.group
-                        artifactId = 'gradle-api'
-                        pom {
-                            name = "Gradle ${gradleVersion} API";
-                            description = project.provider { project.description }
-                            developers {
-                                developer {
-                                    id = "gradle"
-                                    name = "Gradle Inc."
-                                    url = "https://github.com/gradle"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            configureGradleSourceJarGenerator(project)
+            configureGradleApiJarGenerator(project)
+            configureGradleTestKitJarGenerator(project)
 
             apply plugin: 'com.jfrog.bintray'
             // Temporary workaround for https://github.com/bintray/gradle-bintray-plugin/issues/229
@@ -180,6 +115,197 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
 
             tasks.register('uploadGradleApiJars') {
                 dependsOn('bintrayUpload')
+            }
+        }
+    }
+
+    protected void configureGradleSourceJarGenerator(Project project) {
+        def gradleVersion = project.name
+
+        project.with {
+            def generateGradleSourceJarTask = tasks.register("generateGradleSource", GenerateGradleSourceJar) { task ->
+                task.getVersion().set(gradleVersion)
+                task.getClasspath().from(configurations.runtime)
+            }
+
+            configurations {
+                sourcesElements {
+                    canBeResolved = false
+                    canBeConsumed = true
+                    outgoing.artifact(generateGradleSourceJarTask.flatMap { it.outputFile }) {
+                        classifier = 'sources'
+                    }
+                    attributes {
+                        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+                        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.DOCUMENTATION))
+                        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
+                        attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType, DocsType.SOURCES))
+                        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Integer.parseInt(minimumJavaVersionFor(gradleVersion).majorVersion))
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates the Gradle API JAR component.
+     *
+     * @param project this project
+     */
+    protected void configureGradleApiJarGenerator(Project project) {
+        def gradleVersion = project.name
+
+        project.with {
+            def generateGradleApiJarTask = tasks.register("generateGradleApi", GenerateGradleApiJar) { task ->
+                task.getVersion().set(gradleVersion)
+                task.getClasspath().from(configurations.runtime)
+            }
+
+            configurations {
+                apiElements {
+                    canBeResolved = false
+                    canBeConsumed = true
+                    extendsFrom compileOnly
+                    outgoing.artifact(generateGradleApiJarTask.flatMap { it.outputFile })
+                    attributes {
+                        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_API))
+                        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.LIBRARY))
+                        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
+                        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, LibraryElements.JAR))
+                        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Integer.parseInt(minimumJavaVersionFor(gradleVersion).majorVersion))
+                    }
+                }
+
+                runtimeElements {
+                    canBeResolved = false
+                    canBeConsumed = true
+                    extendsFrom runtimeOnly
+                    outgoing.artifact(generateGradleApiJarTask.flatMap { it.outputFile })
+                    attributes {
+                        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+                        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.LIBRARY))
+                        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
+                        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, LibraryElements.JAR))
+                        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Integer.parseInt(minimumJavaVersionFor(gradleVersion).majorVersion))
+                    }
+                }
+            }
+            def adhocComponent = softwareComponentFactory.adhoc('gradleApi');
+            adhocComponent.addVariantsFromConfiguration(configurations.apiElements) {}
+            adhocComponent.addVariantsFromConfiguration(configurations.runtimeElements) {}
+            adhocComponent.addVariantsFromConfiguration(configurations.sourcesElements) {}
+            project.getComponents().add(adhocComponent);
+
+            apply plugin: 'maven-publish'
+            publishing {
+                publications {
+                    gradleApi(MavenPublication) {
+                        from components.gradleApi
+                        version = gradleVersion
+                        groupId = project.group
+                        artifactId = 'gradle-api'
+                        pom {
+                            name = "Gradle ${gradleVersion} API";
+                            description = project.provider { project.description }
+                            developers {
+                                developer {
+                                    id = "gradle"
+                                    name = "Gradle Inc."
+                                    url = "https://github.com/gradle"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates the Gradle Test Kit JAR component.
+     *
+     * @param project this project
+     */
+    protected void configureGradleTestKitJarGenerator(Project project) {
+        def gradleVersion = project.name
+
+        project.with {
+            def generateGradleTestKitApiJarTask = tasks.register("generateGradleTestKitApi", GenerateGradleTestKitApiJar) { task ->
+                task.getVersion().set(gradleVersion)
+                task.getClasspath().from(configurations.runtime)
+            }
+
+            configurations {
+                testKitApi {
+                    canBeResolved = false
+                    canBeConsumed = false
+                }
+
+                testKitApiElements {
+                    canBeResolved = false
+                    canBeConsumed = true
+                    extendsFrom(compileOnly, testKitApi)
+                    outgoing.artifact(generateGradleTestKitApiJarTask.flatMap { it.outputFile })
+                    attributes {
+                        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_API))
+                        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.LIBRARY))
+                        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
+                        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, LibraryElements.JAR))
+                        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Integer.parseInt(minimumJavaVersionFor(gradleVersion).majorVersion))
+                    }
+                }
+
+                testKitRuntimeOnly {
+                    canBeResolved = false
+                    canBeConsumed = false
+                }
+
+                testKitRuntimeElements {
+                    canBeResolved = false
+                    canBeConsumed = true
+                    extendsFrom(runtimeOnly, testKitApi)
+                    outgoing.artifact(generateGradleTestKitApiJarTask.flatMap { it.outputFile })
+                    attributes {
+                        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+                        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.LIBRARY))
+                        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
+                        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, LibraryElements.JAR))
+                        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Integer.parseInt(minimumJavaVersionFor(gradleVersion).majorVersion))
+                    }
+                }
+            }
+
+            dependencies {
+                testKitApi "dev.gradleplugins:gradle-api:${gradleVersion}"
+            }
+
+            def adhocComponent = softwareComponentFactory.adhoc('gradleTestKit');
+            adhocComponent.addVariantsFromConfiguration(configurations.testKitApiElements) {}
+            adhocComponent.addVariantsFromConfiguration(configurations.testKitRuntimeElements) {}
+            adhocComponent.addVariantsFromConfiguration(configurations.sourcesElements) {}
+            project.getComponents().add(adhocComponent)
+
+            apply plugin: 'maven-publish'
+            publishing {
+                publications {
+                    gradleTestKit(MavenPublication) {
+                        from components.gradleTestKit
+                        version = gradleVersion
+                        groupId = project.group
+                        artifactId = 'gradle-test-kit'
+                        pom {
+                            name = "Gradle Test Kit ${gradleVersion}";
+                            description = project.provider { project.description }
+                            developers {
+                                developer {
+                                    id = "gradle"
+                                    name = "Gradle Inc."
+                                    url = "https://github.com/gradle"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

@@ -33,7 +33,7 @@ import org.gradle.workers.WorkerExecutor
 import javax.inject.Inject
 
 @CompileStatic
-public abstract class GenerateGradleApiJar extends DefaultTask {
+abstract class GenerateGradleSourceJar extends DefaultTask {
     @Input
     abstract Property<String> getVersion();
 
@@ -50,8 +50,8 @@ public abstract class GenerateGradleApiJar extends DefaultTask {
     protected abstract ProjectLayout getLayout()
 
     @Inject
-    GenerateGradleApiJar() {
-        getOutputFile().value(layout.buildDirectory.file(version.map { "gradle-user-home/caches/${it}/generated-gradle-jars/gradle-api-${it}.jar" })).disallowChanges()
+    GenerateGradleSourceJar() {
+        getOutputFile().value(layout.buildDirectory.file(version.map { "tmp/${this.name}/build/distributions/gradle-${it}-src.jar" })).disallowChanges()
     }
 
     @TaskAction
@@ -61,18 +61,44 @@ public abstract class GenerateGradleApiJar extends DefaultTask {
         }.submit(ExecuteGradleAction.class) { param ->
             param.gradleUserHomeDirectory.set(layout.buildDirectory.dir('gradle-user-home'))
             param.workingDirectory.set(this.temporaryDir)
-            param.version.set(this.version)
-            param.buildscript.set('''
-            |def configuration = configurations.create('generator')
-            |dependencies {
-            |   generator gradleApi()
+            param.version.set('6.5')
+            param.buildscript.set("""
+            |buildscript {
+            |    dependencies {
+            |        classpath 'io.github.http-builder-ng:http-builder-ng-core:1.0.4'
+            |    }
+            |    repositories {
+            |        mavenCentral()
+            |    }
             |}
-            |tasks.create('generate') {
-            |   doLast {
-            |       configuration.resolve()
+            |
+            |apply plugin: 'java'
+            |import groovyx.net.http.HttpBuilder
+            |import groovyx.net.http.optional.Download
+            |tasks.create('download') {
+            |   ext.outputFile = file("gradle-src-${this.version.get()}.zip")
+            |   outputs.file(outputFile)
+            |   inputs.property('gradleVersion', gradle.gradleVersion)
+            |   doFirst {
+            |       File file = HttpBuilder.configure { request.uri = "https://services.gradle.org/distributions/gradle-${this.version.get()}-src.zip" }.get {
+            |           Download.toFile(delegate, outputFile)
+            |       }
             |   }
             |}
-            |'''.stripMargin())
+            |tasks.create('generate', Zip) {
+            |   dependsOn(tasks.download)
+            |   from({zipTree(tasks.download.outputFile).matching { include('*/subprojects/*/src/*/**/*.java', '*/subprojects/*/src/*/**/*.groovy', '*/subprojects/*/src/*/**/*.kt').exclude('buildSrc/**/*') } }) {
+            |       eachFile {
+            |           relativePath = new RelativePath(relativePath.file, relativePath.segments.drop(6))
+            |       }
+            |       includeEmptyDirs = false
+            |   }
+            |   baseName = 'gradle'
+            |   version = '${this.getVersion().get()}'
+            |   extension = 'jar'
+            |   classifier = 'src'
+            |}
+            |""".stripMargin())
             param.tasks.set(['generate'])
         }
     }
