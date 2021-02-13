@@ -6,6 +6,7 @@ import org.gradle.api.Project
 import org.gradle.api.attributes.*
 import org.gradle.api.attributes.java.TargetJvmVersion
 import org.gradle.api.component.SoftwareComponentFactory
+import org.gradle.api.credentials.AwsCredentials
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.internal.artifact.FileBasedMavenArtifact
@@ -61,6 +62,16 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
             configureGradleApiJarGenerator(project)
             configureGradleTestKitJarGenerator(project)
 
+            apply plugin: 'maven-publish'
+            publishing {
+                repositories {
+                    maven {
+                        name = 'nokeeRelease'
+                        url = providers.gradleProperty("${name}Url").forUseAtConfigurationTime().orElse("")
+                        credentials(AwsCredentials)
+                    }
+                }
+            }
             apply plugin: 'com.jfrog.bintray'
             // Temporary workaround for https://github.com/bintray/gradle-bintray-plugin/issues/229
             PublishingExtension publishing = project.extensions.getByType(PublishingExtension)
@@ -114,7 +125,8 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
             }
 
             tasks.register('uploadGradleApiJars') {
-                dependsOn('bintrayUpload')
+//                dependsOn('bintrayUpload')
+                dependsOn('publish')
             }
         }
     }
