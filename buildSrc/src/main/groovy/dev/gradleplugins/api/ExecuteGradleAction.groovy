@@ -11,37 +11,37 @@ import org.gradle.workers.WorkAction
 import org.gradle.workers.WorkParameters
 
 abstract class ExecuteGradleAction implements WorkAction<Parameters>, FileSystemFixture, GradleScriptFixture {
-    static interface Parameters extends WorkParameters {
-        DirectoryProperty getWorkingDirectory();
-        DirectoryProperty getGradleUserHomeDirectory();
+	static interface Parameters extends WorkParameters {
+		DirectoryProperty getWorkingDirectory();
+		DirectoryProperty getGradleUserHomeDirectory();
 
-        Property<String> getVersion();
-        Property<String> getBuildscript();
+		Property<String> getVersion();
+		Property<String> getBuildscript();
 
-        ListProperty<String> getTasks();
-    }
+		ListProperty<String> getTasks();
+	}
 
-    @Override
-    File getTestDirectory() {
-        return parameters.workingDirectory.get().asFile
-    }
+	@Override
+	File getTestDirectory() {
+		return parameters.workingDirectory.get().asFile
+	}
 
-    @Override
-    void execute() {
-        testDirectory.mkdirs()
+	@Override
+	void execute() {
+		testDirectory.mkdirs()
 
-        writeBuildscriptFile()
+		writeBuildscriptFile()
 
-        GradleRunner.create(GradleExecutor.gradleTestKit())
-                .inDirectory(testDirectory)
-                .withGradleUserHomeDirectory(parameters.gradleUserHomeDirectory.get().asFile)
-                .withGradleVersion(parameters.version.get())
-                .withTasks(parameters.tasks.get())
-                .withoutDeprecationChecks()
-                .build()
-    }
+		GradleRunner.create(GradleExecutor.gradleTestKit())
+				.inDirectory(testDirectory)
+				.withGradleUserHomeDirectory(parameters.gradleUserHomeDirectory.get().asFile)
+				.withGradleVersion(parameters.version.get())
+				.withTasks(parameters.tasks.get())
+				.withoutDeprecationChecks()
+				.build()
+	}
 
-    private void writeBuildscriptFile() {
-        buildFile.text = parameters.buildscript.get()
-    }
+	private void writeBuildscriptFile() {
+		buildFile.text = parameters.buildscript.get()
+	}
 }

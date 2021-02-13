@@ -1,33 +1,33 @@
 apply plugin: 'dev.gradleplugins.groovy-gradle-plugin'
 
 gradlePlugin {
-    plugins {
-        generateGradleApiPlugin {
-            id = 'dev.gradleplugins.gradle-api-jar'
-            implementationClass = 'dev.gradleplugins.api.GenerateGradleApiJarPlugin'
-        }
-    }
+	plugins {
+		generateGradleApiPlugin {
+			id = 'dev.gradleplugins.gradle-api-jar'
+			implementationClass = 'dev.gradleplugins.api.GenerateGradleApiJarPlugin'
+		}
+	}
 }
 
 repositories {
-    jcenter()
-    gradlePluginPortal()
-    maven {
-        url = uri('https://repo.gradle.org/gradle/libs-releases')
-    }
-    maven { url = 'https://repo.nokeedev.net/release' }
-    maven { url = 'https://repo.nokeedev.net/snapshot' }
+	jcenter()
+	gradlePluginPortal()
+	maven {
+		url = uri('https://repo.gradle.org/gradle/libs-releases')
+	}
+	maven { url = 'https://repo.nokeedev.net/release' }
+	maven { url = 'https://repo.nokeedev.net/snapshot' }
 }
 
 dependencies {
-    implementation gradleRunnerKit()
-    implementation testFixtures(gradleRunnerKit())
-    implementation testFixtures('dev.gradleplugins:gradle-fixtures-file-system:latest.release')
+	implementation gradleRunnerKit()
+	implementation testFixtures(gradleRunnerKit())
+	implementation testFixtures('dev.gradleplugins:gradle-fixtures-file-system:latest.release')
 
-    implementation('dev.gradleplugins:gradle-plugin-development:1.1.34') {
-        because 'we require access to the Gradle compatibility knowledge base'
-    }
-    implementation('com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4') {
-        because 'we unfortunately use the bintray plugin to publish our JARs'
-    }
+	implementation('dev.gradleplugins:gradle-plugin-development:1.1.34') {
+		because 'we require access to the Gradle compatibility knowledge base'
+	}
+	implementation('com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4') {
+		because 'we unfortunately use the bintray plugin to publish our JARs'
+	}
 }

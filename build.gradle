@@ -15,9 +15,9 @@
  */
 
 subprojects {
-    apply plugin: 'dev.gradleplugins.gradle-api-jar'
+	apply plugin: 'dev.gradleplugins.gradle-api-jar'
 }
 
 tasks.register('uploadGradleApiJars') {
-    dependsOn(subprojects*.tasks*.bintrayUpload)
+	dependsOn(subprojects*.tasks*.bintrayUpload)
 }

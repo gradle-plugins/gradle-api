@@ -20,10 +20,8 @@ import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.ProjectLayout
-import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
@@ -34,46 +32,46 @@ import javax.inject.Inject
 
 @CompileStatic
 abstract class GenerateGradleTestKitApiJar extends DefaultTask {
-    @Input
-    abstract Property<String> getVersion();
+	@Input
+	abstract Property<String> getVersion();
 
-    @Classpath
-    abstract ConfigurableFileCollection getClasspath()
+	@Classpath
+	abstract ConfigurableFileCollection getClasspath()
 
-    @OutputFile
-    abstract RegularFileProperty getOutputFile()
+	@OutputFile
+	abstract RegularFileProperty getOutputFile()
 
-    @Inject
-    protected abstract WorkerExecutor getWorkerExecutor()
+	@Inject
+	protected abstract WorkerExecutor getWorkerExecutor()
 
-    @Inject
-    protected abstract ProjectLayout getLayout()
+	@Inject
+	protected abstract ProjectLayout getLayout()
 
-    @Inject
-    GenerateGradleTestKitApiJar() {
-        getOutputFile().value(layout.buildDirectory.file(version.map { "gradle-user-home/caches/${it}/generated-gradle-jars/gradle-test-kit-${it}.jar" })).disallowChanges()
-    }
+	@Inject
+	GenerateGradleTestKitApiJar() {
+		getOutputFile().value(layout.buildDirectory.file(version.map { "gradle-user-home/caches/${it}/generated-gradle-jars/gradle-test-kit-${it}.jar" })).disallowChanges()
+	}
 
-    @TaskAction
-    private void doGenerate() {
-        getWorkerExecutor().processIsolation {
-            it.getClasspath().from(this.classpath)
-        }.submit(ExecuteGradleAction.class) { param ->
-            param.gradleUserHomeDirectory.set(layout.buildDirectory.dir('gradle-user-home'))
-            param.workingDirectory.set(this.temporaryDir)
-            param.version.set(this.version)
-            param.buildscript.set('''
-            |def configuration = configurations.create('generator')
-            |dependencies {
-            |   generator gradleTestKit()
-            |}
-            |tasks.create('generate') {
-            |   doLast {
-            |       configuration.resolve()
-            |   }
-            |}
-            |'''.stripMargin())
-            param.tasks.set(['generate'])
-        }
-    }
+	@TaskAction
+	private void doGenerate() {
+		getWorkerExecutor().processIsolation {
+			it.getClasspath().from(this.classpath)
+		}.submit(ExecuteGradleAction.class) { param ->
+			param.gradleUserHomeDirectory.set(layout.buildDirectory.dir('gradle-user-home'))
+			param.workingDirectory.set(this.temporaryDir)
+			param.version.set(this.version)
+			param.buildscript.set('''
+			|def configuration = configurations.create('generator')
+			|dependencies {
+			|	generator gradleTestKit()
+			|}
+			|tasks.create('generate') {
+			|	doLast {
+			|		configuration.resolve()
+			|	}
+			|}
+			|'''.stripMargin())
+			param.tasks.set(['generate'])
+		}
+	}
 }

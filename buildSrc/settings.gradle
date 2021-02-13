@@ -1,10 +1,10 @@
 buildscript {
-    repositories {
-        gradlePluginPortal()
-        maven { url = 'https://dl.bintray.com/gradle-plugins/distributions' }
-    }
-    dependencies {
-        classpath 'dev.gradleplugins:gradle-plugin-development:1.1.35'
-    }
+	repositories {
+		gradlePluginPortal()
+		maven { url = 'https://dl.bintray.com/gradle-plugins/distributions' }
+	}
+	dependencies {
+		classpath 'dev.gradleplugins:gradle-plugin-development:1.1.35'
+	}
 }
 apply plugin: 'dev.gradleplugins.gradle-plugin-development'
