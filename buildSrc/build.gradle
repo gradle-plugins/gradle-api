@@ -15,7 +15,8 @@ repositories {
     maven {
         url = uri('https://repo.gradle.org/gradle/libs-releases')
     }
-    maven { url = 'https://dl.bintray.com/nokeedev/distributions-snapshots/' }
+    maven { url = 'https://repo.nokeedev.net/release' }
+    maven { url = 'https://repo.nokeedev.net/snapshot' }
 }
 
 dependencies {
