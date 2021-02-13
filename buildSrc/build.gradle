@@ -25,7 +25,4 @@ dependencies {
 	implementation('dev.gradleplugins:gradle-plugin-development:1.1.34') {
 		because 'we require access to the Gradle compatibility knowledge base'
 	}
-	implementation('com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4') {
-		because 'we unfortunately use the bintray plugin to publish our JARs'
-	}
 }
