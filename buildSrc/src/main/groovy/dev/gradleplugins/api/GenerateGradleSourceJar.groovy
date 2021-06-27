@@ -59,7 +59,7 @@ abstract class GenerateGradleSourceJar extends DefaultTask {
 		}.submit(ExecuteGradleAction.class) { param ->
 			param.gradleUserHomeDirectory.set(layout.buildDirectory.dir('gradle-user-home'))
 			param.workingDirectory.set(this.temporaryDir)
-			param.version.set('6.5')
+			param.version.set('6.5') // unrelated to target Gradle version
 			param.buildscript.set("""
 			|buildscript {
 			|	dependencies {
