@@ -23,6 +23,7 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
 
 			group = 'dev.gradleplugins'
 			version = gradleVersion
+			description = "Gradle ${gradleVersion} API redistribution."
 
 			// Configure classpath for ExecuteGradleAction worker
 			configurations {
@@ -186,18 +187,32 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
 				publications {
 					gradleApi(MavenPublication) {
 						from components.gradleApi
+						withoutBuildIdentifier()
 						version = gradleVersion
 						groupId = project.group
 						artifactId = 'gradle-api'
 						pom {
 							name = "Gradle ${gradleVersion} API";
 							description = project.provider { project.description }
+							url = 'https://gradleplugins.dev'
+							licenses {
+								license {
+									name = 'The Apache License, Version 2.0'
+									url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+								}
+							}
 							developers {
 								developer {
-									id = "gradle"
-									name = "Gradle Inc."
-									url = "https://github.com/gradle"
+									id = 'gradle'
+									name = 'Gradle Team'
+									organization = 'Gradle Inc.'
+									organizationUrl = 'https://gradle.org'
 								}
+							}
+							scm {
+								connection = 'scm:git:git://github.com/gradle/gradle.git'
+								developerConnection = 'scm:git:ssh://github.com:gradle/gradle.git'
+								url = 'https://github.com/gradle/gradle/tree/master'
 							}
 						}
 					}
@@ -275,18 +290,32 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
 				publications {
 					gradleTestKit(MavenPublication) {
 						from components.gradleTestKit
+						withoutBuildIdentifier()
 						version = gradleVersion
 						groupId = project.group
 						artifactId = 'gradle-test-kit'
 						pom {
-							name = "Gradle Test Kit ${gradleVersion}";
+							name = "Gradle ${gradleVersion} Test Kit API";
 							description = project.provider { project.description }
+							url = 'https://gradleplugins.dev'
+							licenses {
+								license {
+									name = 'The Apache License, Version 2.0'
+									url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+								}
+							}
 							developers {
 								developer {
-									id = "gradle"
-									name = "Gradle Inc."
-									url = "https://github.com/gradle"
+									id = 'gradle'
+									name = 'Gradle Team'
+									organization = 'Gradle Inc.'
+									organizationUrl = 'https://gradle.org'
 								}
+							}
+							scm {
+								connection = 'scm:git:git://github.com/gradle/gradle.git'
+								developerConnection = 'scm:git:ssh://github.com:gradle/gradle.git'
+								url = 'https://github.com/gradle/gradle/tree/master'
 							}
 						}
 					}
