@@ -189,8 +189,11 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
 			}
 			def adhocComponent = softwareComponentFactory.adhoc('gradleApi');
 			adhocComponent.addVariantsFromConfiguration(configurations.apiElements) {}
-			adhocComponent.addVariantsFromConfiguration(configurations.runtimeElements) {}
+			adhocComponent.addVariantsFromConfiguration(configurations.runtimeElements) {
+				it.mapToMavenScope('runtime')
+			}
 			adhocComponent.addVariantsFromConfiguration(configurations.sourcesElements) {}
+			adhocComponent.addVariantsFromConfiguration(configurations.javadocElements) {}
 			project.getComponents().add(adhocComponent);
 
 			apply plugin: 'maven-publish'
@@ -292,8 +295,11 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
 
 			def adhocComponent = softwareComponentFactory.adhoc('gradleTestKit');
 			adhocComponent.addVariantsFromConfiguration(configurations.testKitApiElements) {}
-			adhocComponent.addVariantsFromConfiguration(configurations.testKitRuntimeElements) {}
+			adhocComponent.addVariantsFromConfiguration(configurations.testKitRuntimeElements) {
+				it.mapToMavenScope('runtime')
+			}
 			adhocComponent.addVariantsFromConfiguration(configurations.sourcesElements) {}
+			adhocComponent.addVariantsFromConfiguration(configurations.javadocElements) {}
 			project.getComponents().add(adhocComponent)
 
 			apply plugin: 'maven-publish'
