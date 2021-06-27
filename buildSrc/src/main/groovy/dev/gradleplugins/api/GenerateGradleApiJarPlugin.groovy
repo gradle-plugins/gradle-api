@@ -55,6 +55,7 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
 			}
 
 			configureGradleSourceJarGenerator(project)
+			configureGradleJavadocJarGenerator(project)
 			configureGradleApiJarGenerator(project)
 			configureGradleTestKitJarGenerator(project)
 
@@ -96,6 +97,34 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
 						attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.DOCUMENTATION))
 						attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
 						attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType, DocsType.SOURCES))
+						attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Integer.parseInt(minimumJavaVersionFor(gradleVersion).majorVersion))
+					}
+				}
+			}
+		}
+	}
+
+	protected void configureGradleJavadocJarGenerator(Project project) {
+		def gradleVersion = project.name
+
+		project.with {
+			def generateGradleJavadocJarTask = tasks.register("generateGradleJavadoc", GenerateGradleJavadocJar) { task ->
+				task.getVersion().set(gradleVersion)
+				task.getClasspath().from(configurations.runtime)
+			}
+
+			configurations {
+				javadocElements {
+					canBeResolved = false
+					canBeConsumed = true
+					outgoing.artifact(generateGradleJavadocJarTask.flatMap { it.outputFile }) {
+						classifier = 'javadoc'
+					}
+					attributes {
+						attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+						attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.DOCUMENTATION))
+						attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
+						attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType, DocsType.JAVADOC))
 						attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, Integer.parseInt(minimumJavaVersionFor(gradleVersion).majorVersion))
 					}
 				}
