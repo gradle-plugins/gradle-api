@@ -78,7 +78,10 @@ abstract class GenerateGradleSourceJar extends DefaultTask {
 			|	outputs.file(outputFile)
 			|	inputs.property('gradleVersion', gradle.gradleVersion)
 			|	doFirst {
-			|		File file = HttpBuilder.configure { request.uri = "https://services.gradle.org/distributions/gradle-${this.version.get()}-src.zip" }.get {
+			|		File file = HttpBuilder.configure {
+			|			request.uri = "https://services.gradle.org/distributions/gradle-${this.version.get()}-src.zip"
+			|			request.headers.put('User-Agent', 'gradle-api-extractor');
+			|		}.get {
 			|			Download.toFile(delegate, outputFile)
 			|		}
 			|	}
