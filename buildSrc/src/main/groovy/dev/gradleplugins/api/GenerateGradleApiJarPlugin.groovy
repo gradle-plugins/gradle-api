@@ -71,6 +71,17 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
 				}
 			}
 
+			apply plugin: 'signing'
+			signing {
+				sign(publishing.publications)
+				if (!project.hasProperty('signing.secretKeyRingFile')) {
+					def signingKeyId = findProperty("signing.keyId").toString()
+					def signingKey = findProperty("signing.key").toString()
+					def signingPassword = findProperty("signing.password").toString()
+					useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+				}
+			}
+
 			tasks.register('uploadGradleApiJars') {
 				dependsOn('publish')
 			}
