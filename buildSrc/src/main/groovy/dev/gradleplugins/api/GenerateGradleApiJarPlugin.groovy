@@ -5,7 +5,7 @@ import org.gradle.api.Project
 import org.gradle.api.attributes.*
 import org.gradle.api.attributes.java.TargetJvmVersion
 import org.gradle.api.component.SoftwareComponentFactory
-import org.gradle.api.credentials.AwsCredentials
+import org.gradle.api.credentials.PasswordCredentials
 import org.gradle.api.publish.maven.MavenPublication
 
 import javax.annotation.Nullable
@@ -64,9 +64,9 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
 			publishing {
 				repositories {
 					maven {
-						name = 'nokeeRelease'
-						url = providers.gradleProperty("${name}Url").forUseAtConfigurationTime().orElse("")
-						credentials(AwsCredentials)
+						name = 'ossrhRelease'
+						url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+						credentials(PasswordCredentials)
 					}
 				}
 			}
