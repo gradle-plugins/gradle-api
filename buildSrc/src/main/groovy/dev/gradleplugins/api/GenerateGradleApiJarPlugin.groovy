@@ -47,7 +47,9 @@ abstract class GenerateGradleApiJarPlugin implements Plugin<Project> {
 			}
 			dependencies {
 				compileOnly provider { "org.codehaus.groovy:groovy:${groovyVersionOf(gradleVersion)}" }
-				runtimeOnly provider { "org.codehaus.groovy:groovy-all:${groovyVersionOf(gradleVersion)}" }
+				runtimeOnly(provider { "org.codehaus.groovy:groovy-all:${groovyVersionOf(gradleVersion)}@pom" }) {
+					transitive = true
+				}
 
 				def kotlinVersion = kotlinVersionOf(gradleVersion)
 				if (kotlinVersion.present) {
