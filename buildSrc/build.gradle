@@ -22,7 +22,7 @@ dependencies {
 	implementation testFixtures(gradleRunnerKit())
 	implementation testFixtures('dev.gradleplugins:gradle-fixtures-file-system:latest.release')
 
-	implementation('dev.gradleplugins:gradle-plugin-development:1.4') {
+	implementation('dev.gradleplugins:gradle-plugin-development:1.6.9') {
 		because 'we require access to the Gradle compatibility knowledge base'
 	}
 }
