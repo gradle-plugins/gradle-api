@@ -1,37 +1,90 @@
-:jbake-version: 1.5
-= Gradle API Redistribution
+:ref-gradle-api: https://mvnrepository.com/artifact/dev.gradleplugins/gradle-api
+:ref-gradle-test-kit: https://mvnrepository.com/artifact/dev.gradleplugins/gradle-test-kit
+:ref-apache-2: https://www.apache.org/licenses/LICENSE-2.0
+:ref-toolbox: https://github.com/gradle-plugins/toolbox
+= Gradle API & TestKit JARs Redistribution
 
-As part of the Gradle toolbox project, the Nokee team is redistribution the Gradle API JARs with its source for Gradle 2.14 and newer.
-Plugin authors can target specific Gradle API versions while building with any Gradle versions.
-Head over to link:https://nokee.dev/docs/nightly/samples/gradle-plugin-development-runtime-compatibilities/[the Gradle runtime compatibilities sample] to see them in action.
+Introducing a game-changer for Gradle users and plugin authors!
+The Nokee team is maintaining this project that redistributes Gradle API and TestKit JARs to Maven Central, making them more accessible and enjoyable than ever before!
+Experience the amazing benefits:
 
-== Usage
+- 🌈 Browse Gradle API and TestKit sources directly in your IDE, just like any other dependencies!
+- 🚀 No more need for the heavy "all" Gradle distribution!
+- 📈 Supports JARs for Gradle versions 2.14 and up, offering extensive compatibility!
+- 🎯 Gradle plugin authors can target specific Gradle API versions while building their plugin with any Gradle version, providing unmatched flexibility!
+- 🎩 Detach your product from the build system!
+Maven build can use these JARs as well!
 
-Apply the following plugin in your `settings.gradle[.kts]`:
+== Usage 🛠️
 
-[source,groovy,subs=attributes+]
-----
-plugins {
-    id("dev.gradleplugins.gradle-plugin-development") version("{jbake-version}")
-}
-----
+To integrate the dependencies in your Gradle or Maven build, follow the super easy instructions below.
 
-NOTE: Head over to link:https://nokee.dev/docs/nightly/manual/gradle-plugin-development-plugin.html[the reference chapter] to learn more about the `dev.gradleplugins.gradle-plugin-development` plugin.
-
-Then add the project repository in your build script, e.g. `build.gradle[.kts]`:
-
-[source,groovy]
-----
-repositories {
-    gradlePluginDevelopment()
-}
-----
-
-Finally, add a dependency on the Gradle API of your choice, i.e. Gradle API 4.9:
+=== Gradle
+Add the following dependency to your build.gradle file:
 
 [source,groovy]
 ----
 dependencies {
-    compileOnly(gradleApi("4.9"))
+    compileOnly "dev.gradleplugins:gradle-api:<version>"
+    testImplementation "dev.gradleplugins:gradle-test-kit:<version>"
 }
 ----
+
+Replace `<version>` with the desired Gradle version.
+Remember, always use `compileOnly` for the Gradle API dependency, as the Gradle build tool already provides the Gradle API as part of its execution.
+
+=== Gradle with Toolbox Plugin (preferred)
+
+Using the link:{ref-toolbox}[Toolbox plugin] is preferred, as it abstracts away the artifact coordinates, which may change in the future if we need to patch them.
+Apply the plugin in your `settings.gradle[.kts]`:
+
+[source,groovy]
+----
+plugins {
+    id("dev.gradleplugins.gradle-plugin-development") version("<toolbox-plugin-version>")
+}
+----
+
+Use the convenient APIs in any of your `build.gradle[.kts]`:
+
+[source,groovy]
+----
+dependencies {
+    compileOnly(gradleApi("<version>"))
+    testImplementation(gradleTestKit("<version>"))
+}
+----
+Replace `<version>` with the desired Gradle version.
+The `compileOnly` configuration is used for the Gradle API dependency because the Gradle build tool already provides the Gradle API as part of its execution. Therefore, the final artifact should not include it.
+
+=== Maven
+
+Add the following dependency to your `pom.xml` file:
+
+[source,xml]
+----
+<dependencies>
+    <dependency>
+       <groupId>dev.gradleplugins</groupId>
+       <artifactId>gradle-api</artifactId>
+       <version>${gradle.version}</version>
+       <scope>provided</scope>
+    </dependency>
+    <dependency>
+       <groupId>dev.gradleplugins</groupId>
+       <artifactId>gradle-test-kit</artifactId>
+       <version>${gradle.version}</version>
+       <scope>test</scope>
+    </dependency>
+</dependencies>
+----
+
+Replace `${gradle.version}` with the desired Gradle version.
+The scope for Gradle API is `provided` because the Gradle build tool already provides the Gradle API as part of its execution. Therefore, the final artifact should not include it.
+
+== Artifacts 🎁
+- link:{ref-gradle-api}[Gradle API] - The treasure you seek 🏆
+- link:{ref-gradle-test-kit}[Gradle TestKit] - Another gem for your collection 💎
+
+== License 📜
+Worry not; the redistributed API JARs share the same license as Gradle itself, which means link:{ref-apache-2}[Apache License 2.0] has got you covered! ✅
